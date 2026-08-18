@@ -11,6 +11,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useMemo } from 'react';
 import { ActionNode } from './nodes/ActionNode';
+import { ConditionNode } from './nodes/ConditionNode';
+import { DialogueNode } from './nodes/DialogueNode';
 
 export const QuestCanvas = () => {
     const {
@@ -22,7 +24,14 @@ export const QuestCanvas = () => {
         selectNode,
     } = useGraphStore();
 
-    const nodeTypes = useMemo(() => ({ actionNode: ActionNode }), []);
+    const nodeTypes = useMemo(
+        () => ({
+            dialogueNode: DialogueNode,
+            conditionNode: ConditionNode,
+            actionNode: ActionNode,
+        }),
+        []
+    );
 
     return (
         <div className="w-full h-full bg-zinc-950 relative">
@@ -46,7 +55,11 @@ export const QuestCanvas = () => {
                 <Background variant={BackgroundVariant.Dots} gap={24} size={1.5} color="#27272a" />
                 <Controls className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 [&>button]:!border-zinc-800" />
                 <MiniMap
-                    nodeColor="#38bdf8"
+                    nodeColor={(n) => {
+                        if (n.type === 'conditionNode') return '#f59e0b';
+                        if (n.type === 'actionNode') return '#c084fc';
+                        return '#38bdf8';
+                    }}
                     maskColor="rgba(9, 9, 11, 0.75)"
                     className="!bg-zinc-900 !border-zinc-800 !rounded-xl overflow-hidden"
                 />
