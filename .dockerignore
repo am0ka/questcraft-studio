@@ -1,0 +1,11 @@
+node_modules
+.next
+.turbo
+dist
+.venv
+__pycache__
+*.pyc
+.git
+.coverage
+coverage
+coverage.xml
