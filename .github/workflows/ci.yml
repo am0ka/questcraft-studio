@@ -1,0 +1,68 @@
+name: CI & Test Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ts-tests:
+    name: TypeScript Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Monorepo Lint & Typecheck
+        run: pnpm turbo run lint
+
+      - name: Run Core Engine Tests with Coverage
+        run: |
+          cd packages/core-engine
+          pnpm test:coverage
+
+  python-tests:
+    name: Python Backend Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python Dependencies
+        run: |
+          cd apps/api
+          uv sync --all-groups
+
+      - name: Run Pytest & Generate Coverage
+        run: |
+          cd apps/api
+          uv run pytest --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage
+          path: apps/api/coverage.xml
