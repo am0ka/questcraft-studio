@@ -1,43 +1,43 @@
 FROM node:24-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
+# Disable telemetry and enable corepack
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 
-# 1. Prune the monorepo
+# 1. Pruning monorepo via Turbo
 FROM base AS pruner
 WORKDIR /app
-RUN npm install -g turbo
+RUN npm install -g turbo@^2
 COPY . .
 RUN turbo prune web --docker
 
-# 2. Install dependencies
+# 2. Install dependencies with increased timeouts
 FROM base AS installer
 WORKDIR /app
+
+# Copy package metadata and lockfile
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN pnpm install --frozen-lockfile
 
-# 3. Build the project
+# Set network stability settings for pnpm (10 minute timeout, retries)
+RUN pnpm config set fetch-timeout 600000 && \
+  pnpm config set fetch-retries 5 && \
+  pnpm config set fetch-retry-mintimeout 20000 && \
+  pnpm config set fetch-retry-maxtimeout 120000 && \
+  pnpm install --frozen-lockfile
+
+# 3. Build project
 COPY --from=pruner /app/out/full/ .
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm turbo run build --filter=web...
 
-# Fix: Next.js standalone file tracing does not include @swc/helpers when using pnpm.
-# Find @swc/helpers in the pnpm store and copy it into the standalone output next to the next package.
-RUN STANDALONE="apps/web/.next/standalone" && \
-    NEXT_PNPM=$(find "$STANDALONE/node_modules/.pnpm" -maxdepth 1 -name "next@*" -type d | head -1) && \
-    SWC_STORE=$(find node_modules/.pnpm -maxdepth 1 -name "@swc+helpers@*" -type d | head -1) && \
-    if [ -n "$NEXT_PNPM" ] && [ -n "$SWC_STORE" ]; then \
-      mkdir -p "$NEXT_PNPM/node_modules/@swc" && \
-      cp -r "$SWC_STORE/node_modules/@swc/helpers" "$NEXT_PNPM/node_modules/@swc/helpers"; \
-    fi
-
-# 4. Production Runner
+# 4. Final Production Runner
 FROM base AS runner
 WORKDIR /app
+
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy the Next.js build output
 COPY --from=installer /app/apps/web/.next/standalone ./
