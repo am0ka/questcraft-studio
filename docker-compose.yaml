@@ -4,6 +4,8 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     container_name: questcraft_api
+    ports:
+      - "8000:8000"
     environment:
       - ENVIRONMENT=production
     restart: unless-stopped
@@ -12,20 +14,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.questcraft-api.rule=Host(`projects.sarsen.dev`) && PathPrefix(`/questcraft/api`)"
-      - "traefik.http.routers.questcraft-api.entrypoints=websecure"
-      - "traefik.http.routers.questcraft-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.questcraft-api.loadbalancer.server.port=8000"
-      - "traefik.http.middlewares.questcraft-api-strip.stripprefix.prefixes=/questcraft"
-      - "traefik.http.routers.questcraft-api.middlewares=questcraft-api-strip"
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     container_name: questcraft_web
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_BASE_PATH=/questcraft
@@ -34,9 +30,3 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.questcraft-web.rule=Host(`projects.sarsen.dev`) && PathPrefix(`/questcraft`)"
-      - "traefik.http.routers.questcraft-web.entrypoints=websecure"
-      - "traefik.http.routers.questcraft-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.questcraft-web.loadbalancer.server.port=3000"
