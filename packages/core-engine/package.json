@@ -5,12 +5,17 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@questcraft/shared-types": "workspace:*"
+    "@questcraft/shared-types": "workspace:*",
+    "@questcraft/tsconfig": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.4.5"
+    "@vitest/coverage-v8": "^1.6.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   }
 }
