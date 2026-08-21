@@ -3,13 +3,11 @@
 > **High-Performance Visual Quest & Dialogue Graph IDE with Live Runtime Simulator and Native Game Engine Compilers.**
 
 [![CI & Tests](https://github.com/am0ka/questcraft-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/am0ka/questcraft-studio/actions)
-[![Coverage](https://img.shields.io/badge/Coverage-98%25-brightgreen.svg)](https://github.com/am0ka/questcraft-studio)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)](https://github.com/am0ka/questcraft-studio)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg?logo=next.js)](https://nextjs.org/)
-[![Python](https://img.shields.io/badge/Python-3.12+-3776AB.svg?logo=python)](https://python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444.svg?logo=turborepo)](https://turbo.build/)
-[![uv](https://img.shields.io/badge/uv-Fast%20Python%20Tooling-purple.svg)](https://github.com/astral-sh/uv)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB.svg?logo=react)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://www.docker.com/)
 
 ## 🌟 Overview
 
@@ -19,23 +17,31 @@
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        NEXT.JS 16 (WEB STUDIO)                         │
-│   • React Flow (@xyflow/react) Canvas  • Zustand Store (Undo / Redo)   │
-│   • Interactive Live RPG Simulator     • Web Audio FX Synthesizer      │
-└───────────────────┬─────────────────────────────────┬──────────────────┘
-                    │                                 │
-                    ▼                                 ▼
-┌──────────────────────────────────────┐  ┌──────────────────────────────┐
-│       @questcraft/core-engine        │  │       FASTAPI BACKEND        │
-│ • Deterministic State Machine        │  │ • NetworkX Graph Analysis    │
-│ • Step-by-Step Narrative Interpreter │  │ • Cycle & Dead-End Linter    │
-│ • Multi-condition Boolean Evaluator  │  │ • Unity C# & Godot Compiler  │
-└──────────────────────────────────────┘  └──────────────────────────────┘
+│                   NEXT.JS 16 FULLSTACK APPLICATION                     │
+│                                                                        │
+│   ┌────────────────────────────────────────────────────────────────┐   │
+│   │                      Frontend Web Studio                       │   │
+│   │ • React Flow (@xyflow/react) Canvas • Zustand (Undo / Redo)    │   │
+│   │ • Interactive Live RPG Simulator   • Web Audio FX Synthesizer  │   │
+│   └───────────────────────────────┬────────────────────────────────┘   │
+│                                   │                                    │
+│   ┌───────────────────────────────┴────────────────────────────────┐   │
+│   │                     Next.js API Routes (/api)                  │   │
+│   │ • /api/v1/graph/validate  • /api/v1/graph/export               │   │
+│   │ • /api/v1/graph/generate-ai • /api/health                      │   │
+│   └───────────────────────────────┬────────────────────────────────┘   │
+│                                   │                                    │
+│   ┌───────────────────────────────┴────────────────────────────────┐   │
+│   │                 Headless Core Engine (lib/engine)              │   │
+│   │ • Deterministic State Machine     • Graph Cycle & Dead-End     │   │
+│   │ • Step-by-Step Narrative Runtime  • Unity & Godot Compilers    │   │
+│   └────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 🚀 Key Features & Engineering Highlights
 
-### 1. 🎨 Visual Graph IDE (`apps/web`)
+### 1. 🎨 Visual Graph IDE (`components/canvas`)
 * **Custom Interactive Nodes**:
   * **Dialogue Node**: Dynamic multi-choice branching, character avatars, speaker metadata.
   * **Condition Node**: Logical gate checking variables and inventory rules (`>=`, `==`, `has_item`) with dedicated `True` / `False` output ports.
@@ -43,15 +49,14 @@
 * **State Architecture**: Reactive **Zustand** store with optimized 20-step snapshot **Undo / Redo** history stack.
 * **Modern Tooling UI**: Cyberpunk / Unreal Engine dark theme with hardware-accelerated SVG connections.
 
-### 2. ⚡ Deterministic Runtime Engine (`packages/core-engine`)
+### 2. ⚡ Deterministic Runtime Engine (`lib/engine`)
 * **Zero-dependency State Machine**: Standalone TypeScript interpreter simulating player inventory, quest flags, and variable routing without UI rendering dependencies.
 * **Live Simulator**:
   * Integrated RPG dialogue player with streaming **Typewriter Effect**.
   * Dynamic sound synthesis via **Web Audio API** (zero external mp3 assets required).
   * Real-time active node highlighting on the canvas.
 
-### 3. 🔍 Algorithmic Graph Analysis (`apps/api`)
-* Uses **`NetworkX`** on the Python backend to convert user payloads into Directed Graphs (DiGraph).
+### 3. 🔍 Algorithmic Graph Analysis & Validation
 * **Cycle Detection**: Detects infinite cyclic dialogue loops without valid exit transitions.
 * **Reachability (DFS/BFS)**: Identifies dangling nodes and dead branches disconnected from the root node.
 * **Port Validation**: Ensures all condition handles and dialogue choices target existing nodes.
@@ -59,91 +64,88 @@
 ### 4. 🎮 Native Game Engine Compilers
 * **Unity 3D / Unity 6**: Generates full `ScriptableObject` C# scripts with pre-baked graph node structures, serialized nested choices, and O(1) fast dictionary lookup (`GetNode(string id)`).
 * **Godot 4.x**: Compiles graphs into native GDScript `Resource` classes with pre-structured dictionaries and transition lookups.
+* **Compact JSON**: Clean standardized interchange format.
 
 ## 📂 Repository Structure
 
 ```text
 questcraft-studio/
-├── apps/
-│   ├── web/                     # Next.js 16 App Router, React Flow, Zustand, Tailwind
-│   │   ├── app/                 # Main editor layout & styling
-│   │   ├── components/          # Canvas, Nodes (Dialogue, Condition, Action), Simulator
-│   │   └── store/               # Zustand store with template presets & history stack
-│   │
-│   └── api/                     # FastAPI Backend orchestrated with Astral uv
-│       ├── app/
-│       │   ├── api/v1/          # REST endpoints (/validate, /export, /generate-ai)
-│       │   ├── schemas/         # Pydantic v2 data models
-│       │   └── services/        # NetworkX graph linter & C# / GDScript codegen
-│       └── main.py
+├── app/                         # Next.js 16 App Router & API Endpoints
+│   ├── api/
+│   │   ├── health/              # Healthcheck route (/api/health)
+│   │   └── v1/graph/            # Validate, Export, and AI endpoints
+│   ├── layout.tsx               # Root layout & theme configuration
+│   └── page.tsx                 # Studio editor page
 │
-├── packages/
-│   ├── core-engine/             # Headless State Machine Interpreter & Serializers
-│   ├── shared-types/            # Canonical TypeScript domain contracts & DTOs
-│   ├── tsconfig/                # Strict TypeScript configuration presets
-│   └── ui/                      # Shared design system primitives
+├── components/                  # React components
+│   ├── canvas/                  # React Flow Canvas & Custom Nodes
+│   └── simulator/               # Live RPG Simulator & Audio Engine
 │
-├── pnpm-workspace.yaml          # Monorepo package boundary configuration
-├── turbo.json                   # Turborepo task pipeline with intelligent caching
-└── package.json                 # Root script orchestration
+├── lib/
+│   └── engine/                  # Headless Deterministic Engine & Compilers
+│       ├── interpreter.ts       # RPG Runtime State Machine
+│       ├── serializers.ts       # Unity C# & Godot GDScript Compilers
+│       ├── validator.ts         # Algorithmic Graph Linter (DFS/BFS/Cycles)
+│       └── __tests__/           # Vitest Unit Tests (100% Coverage)
+│
+├── types/                       # Canonical TypeScript Contracts & DTOs
+├── store/                       # Zustand Store & Preset Templates
+├── public/                      # Static Assets
+├── Dockerfile                   # Multi-stage Standalone Docker build
+├── docker-compose.yaml          # Containerized deployment definition
+└── package.json                 # Project scripts & dependencies
 ```
+
 ## 🛠️ Quickstart Guide
+
 ### Prerequisites
-- Node.js: `v24`
-- pnpm: `v11` (`corepack enable pnpm`)
-- Python: `3.12`
-- uv: `brew install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Node.js: `v20+` (or `v24`)
+- pnpm: `v9+` / `v11` (`corepack enable pnpm`)
+- Docker & Docker Compose (optional for containerized run)
 
 ### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/am0ka/questcraft-studio.git
 cd questcraft-studio
 
-# Install monorepo JS/TS dependencies
+# Install dependencies
 pnpm install
-
-# Setup isolated Python virtualenv and backend dependencies
-cd apps/api && uv sync && cd ../..
 ```
 
-### 2. Run All Services with a Single Command
-
+### 2. Run Locally in Development Mode
 ```bash
 pnpm dev
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- 🌐 Web Studio: http://localhost:3000
-- 📡 FastAPI Docs (Swagger UI): http://localhost:8000/docs
+### 3. Run Tests & Coverage
+```bash
+# Run unit tests
+pnpm test
+
+# Run tests with coverage report
+pnpm test:coverage
+```
+
+### 4. Build for Production
+```bash
+pnpm build
+pnpm start
+```
+
+### 5. Run with Docker Compose
+```bash
+docker compose up --build
+```
+Healthcheck is available at `http://localhost:3000/api/health`.
 
 ## 🧪 Tech Stack Summary
 
-### Frontend
-- TypeScript 5.4
-- Next.js 14
-- React Flow (@xyflow/react)
-- Zustand
-- Tailwind CSS
-- Lucide Icons
-
-### Backend API
-- Python 3.11+
-- FastAPI
-- Pydantic v2
-- Uvicorn
-- NetworkX
-- Astral uv
-
-### Tooling & Monorepo
-- Turborepo
-- pnpm workspaces
-- Web Audio API
-- ESLint
-- Prettier
-
-### Code Generation
-- C# (Unity 2022+ / Unity 6)
-- GDScript (Godot 4.x)
-- Compact JSON
+- **Framework**: Next.js 16 (App Router, Turbopack, Standalone Output)
+- **UI & State**: React 19, React Flow (@xyflow/react), Zustand, Tailwind CSS v4, Lucide Icons
+- **Engine & Compilers**: TypeScript 5.9, Directed Graph DFS/BFS Analyzer, Unity C# / Godot GDScript Serializers
+- **Testing**: Vitest, V8 Coverage Provider
+- **Deployment**: Docker Standalone, GitHub Actions CI/CD with Zero-Downtime deploy
 
 ## 👨‍💻 Author
 - 💼 [LinkedIn](https://www.linkedin.com/in/am0ka/)

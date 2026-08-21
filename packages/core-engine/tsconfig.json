@@ -1,8 +1,0 @@
-{
-  "extends": "@questcraft/tsconfig/base.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  },
-  "include": ["src/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist"]
-}

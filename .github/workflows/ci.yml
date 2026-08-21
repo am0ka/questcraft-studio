@@ -31,13 +31,14 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Monorepo Lint & Typecheck
-        run: pnpm turbo run lint
+      - name: Run Lint & Typecheck
+        run: pnpm lint
 
       - name: Run Core Engine Tests with Coverage
-        run: |
-          cd packages/core-engine
-          pnpm test:coverage
+        run: pnpm test:coverage
+
+      - name: Build Next.js Application
+        run: pnpm build
 
   deploy:
     name: Zero-Downtime Deploy
