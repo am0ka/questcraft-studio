@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: production_deploy
+  cancel-in-progress: false
+
 jobs:
   ts-tests:
     name: TypeScript Tests & Coverage
@@ -66,3 +70,62 @@ jobs:
         with:
           name: python-coverage
           path: apps/api/coverage.xml
+
+  deploy:
+    name: Zero-Downtime Deploy
+    needs: [ts-tests, python-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Install Cloudflared
+        run: |
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
+          sudo dpkg -i cloudflared.deb
+          rm cloudflared.deb
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          cat << 'EOF' > ~/.ssh/config
+          Host tunnel-host
+              HostName ${{ secrets.SSH_HOST }}
+              User ${{ secrets.SSH_USER }}
+              IdentityFile ~/.ssh/deploy_key
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+              ProxyCommand cloudflared access ssh --hostname %h --id ${{ secrets.CF_ACCESS_CLIENT_ID }} --secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          EOF
+
+      - name: Execute Zero-Downtime Deployment
+        run: |
+          ssh tunnel-host "bash -s" << 'EOF'
+            set -euo pipefail
+
+            echo "🚀 Starting Deployment in ${{ secrets.DEPLOY_PATH }}..."
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "📦 Fetching latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "🔨 Pre-building images in background..."
+            docker compose build
+
+            echo "🔄 Gracefully updating API (Backend)..."
+            # Перезапускаем только api и ждем healthcheck
+            docker compose up -d --no-deps --wait api
+
+            echo "🔄 Gracefully updating Web (Frontend)..."
+            # Перезапускаем только web и ждем healthcheck
+            docker compose up -d --no-deps --wait web
+
+            echo "🧹 Cleaning up dangling images..."
+            docker image prune -f
+
+            echo "✅ Zero-Downtime deploy complete!"
+          EOF
