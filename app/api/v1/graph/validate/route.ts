@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { GraphValidator } from '@questcraft/core-engine';
-import { QuestGraph } from '@questcraft/shared-types';
+import { GraphValidator } from '@/engine';
+import { QuestGraph } from '@/types';
 
 export async function POST(request: Request) {
     try {

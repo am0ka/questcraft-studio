@@ -9,7 +9,7 @@ import {
     applyEdgeChanges,
     applyNodeChanges,
 } from '@xyflow/react';
-import { DialogueNodeData, ConditionNodeData, ActionNodeData, AnyNodeData } from '@questcraft/shared-types';
+import { DialogueNodeData, ConditionNodeData, ActionNodeData, AnyNodeData } from '@/types';
 import { WITCHER_CONTRACT_TEMPLATE } from './templates';
 
 export type CustomNode = Node<DialogueNodeData | ConditionNodeData | ActionNodeData>;

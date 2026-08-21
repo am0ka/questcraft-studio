@@ -1,8 +1,8 @@
 'use client';
 
 import { useGraphStore } from '@/store/useGraphStore';
-import { QuestInterpreter } from '@questcraft/core-engine';
-import { AnyNodeData, DialogueNodeData, QuestGraph, SimulatorRuntimeState } from '@questcraft/shared-types';
+import { QuestInterpreter } from '@/engine';
+import { AnyNodeData, DialogueNodeData, QuestGraph, SimulatorRuntimeState } from '@/types';
 import { Backpack, CheckCircle2, Play, RotateCcw, Sparkles, Terminal, Volume2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

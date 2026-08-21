@@ -5,7 +5,7 @@ import {
     PlayerState,
     QuestGraph,
     SimulatorRuntimeState
-} from '@questcraft/shared-types';
+} from '@/types';
 
 export class QuestInterpreter {
     public static startQuest(
@@ -154,7 +154,7 @@ export class QuestInterpreter {
     }
 
     private static checkRule(rule: ConditionRule, playerState: PlayerState): boolean {
-        let actualValue: any;
+        let actualValue: unknown;
         const rawKey = rule.variableKey || '';
 
         if (rawKey.startsWith('inventory.')) {

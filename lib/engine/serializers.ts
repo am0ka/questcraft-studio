@@ -2,10 +2,13 @@ import {
     QuestGraph,
     TargetEngine,
     ExportResponse,
+    AnyNodeData,
     DialogueNodeData,
     ConditionNodeData,
     ActionNodeData,
-} from '@questcraft/shared-types';
+    ConditionRule,
+    ActionPayload,
+} from '@/types';
 
 export class GraphSerializer {
     /**
@@ -30,7 +33,7 @@ export class GraphSerializer {
                     })),
                 };
                 return acc;
-            }, {} as Record<string, any>),
+            }, {} as Record<string, unknown>),
         };
 
         return JSON.stringify(payload, null, 2);
@@ -83,14 +86,15 @@ export class GraphSerializer {
         for (const node of graph.nodes || []) {
             const nId = this.escapeCSharp(node.id);
             const nType = (node.type || '').toLowerCase();
-            const data = (node.data || {}) as any;
+            const data = (node.data || {}) as AnyNodeData;
             const label = this.escapeCSharp(data.label || nId);
 
             // 1. Dialogue Node
             if (nType.includes('dialogue') || nType === 'root') {
-                const speaker = this.escapeCSharp(data.speakerName || 'Narrator');
-                const message = this.escapeCSharp(data.messageText || '');
-                const options = (data.options || []) as Array<{ id?: string; text?: string }>;
+                const dialogueData = data as Partial<DialogueNodeData>;
+                const speaker = this.escapeCSharp(dialogueData.speakerName || 'Narrator');
+                const message = this.escapeCSharp(dialogueData.messageText || '');
+                const options = (dialogueData.options || []) as Array<{ id?: string; text?: string }>;
 
                 const optInits = options.map((opt) => {
                     const optId = opt.id || '';
@@ -127,8 +131,9 @@ ${optBlock}
             }
             // 2. Condition Node
             else if (nType.includes('condition')) {
-                const rules = data.rules || [{}];
-                const rule = rules[0] || {};
+                const condData = data as Partial<ConditionNodeData>;
+                const rules = condData.rules || [];
+                const rule = rules[0] || ({} as Partial<ConditionRule>);
                 const varKey = this.escapeCSharp(rule.variableKey || 'inventory.gold');
                 const op = this.escapeCSharp(rule.operator || '>=');
                 const val = this.escapeCSharp(String(rule.value ?? '50'));
@@ -163,8 +168,9 @@ ${optBlock}
             }
             // 3. Action Node
             else if (nType.includes('action')) {
-                const actions = data.actions || [{}];
-                const act = actions[0] || {};
+                const actData = data as Partial<ActionNodeData>;
+                const actions = actData.actions || [];
+                const act = actions[0] || ({} as Partial<ActionPayload>);
                 const actType = this.escapeCSharp(act.type || 'give_item');
                 const targetKey = this.escapeCSharp(act.targetKey || 'gold');
                 const val = this.escapeCSharp(String(act.value ?? '50'));
@@ -329,7 +335,7 @@ ${allNodesCode}
     }
 
     public static toGodotGDScript(graph: QuestGraph): string {
-        const nodesDict: Record<string, any> = {};
+        const nodesDict: Record<string, unknown> = {};
         for (const n of graph.nodes || []) {
             const outEdges = (graph.edges || []).filter((e) => e.source === n.id);
             nodesDict[n.id] = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useGraphStore } from '@/store/useGraphStore';
-import { GraphValidationError, GraphValidationResult } from '@questcraft/shared-types';
+import { GraphValidationError, GraphValidationResult } from '@/types';
 import {
     AlertTriangle,
     BookOpen,

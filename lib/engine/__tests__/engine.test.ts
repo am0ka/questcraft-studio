@@ -3,7 +3,7 @@ import * as CoreEngineModule from '../index';
 import { QuestInterpreter } from '../interpreter';
 import { GraphValidator } from '../validator';
 import { GraphSerializer } from '../serializers';
-import { QuestGraph } from '@questcraft/shared-types';
+import { QuestGraph } from '@/types';
 
 const baseGraph: QuestGraph = {
     id: 'main-graph',

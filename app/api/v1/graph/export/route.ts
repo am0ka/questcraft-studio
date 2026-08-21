@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { GraphSerializer } from '@questcraft/core-engine';
-import { ExportRequest } from '@questcraft/shared-types';
+import { GraphSerializer } from '@/engine';
+import { ExportRequest } from '@/types';
 
 export async function POST(request: Request) {
     try {

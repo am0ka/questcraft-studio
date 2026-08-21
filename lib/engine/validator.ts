@@ -1,4 +1,4 @@
-import { QuestGraph, GraphValidationResult, GraphValidationError, DialogueNodeData } from '@questcraft/shared-types';
+import { QuestGraph, GraphValidationResult, GraphValidationError, DialogueNodeData, AnyNodeData } from '@/types';
 
 export class GraphValidator {
     public static validate(graph: QuestGraph): GraphValidationResult {
@@ -14,70 +14,74 @@ export class GraphValidator {
             });
             return {
                 isValid: false,
+                errors,
                 nodesCount: 0,
                 edgesCount: 0,
-                errors,
             };
         }
 
-        const nodeMap = new Map<string, (typeof nodes)[0]>();
-        for (const n of nodes) {
-            nodeMap.set(n.id, n);
-        }
-
-        // 1. Checking the root node (Root Node)
+        const nodeMap = new Map(nodes.map((n) => [n.id, n]));
         const rootId = graph.rootNodeId || nodes[0]?.id;
+
+        // 1. Checking starting node
         if (!rootId || !nodeMap.has(rootId)) {
             errors.push({
                 severity: 'error',
                 code: 'NO_ROOT_NODE',
-                message: 'The root node of the quest is not defined (Root Node).',
+                message: `Root node '${rootId}' is not found in the graph.`,
             });
         }
 
         // 2. Checking dangling edges
         for (const edge of edges) {
-            if (!nodeMap.has(edge.source) || !nodeMap.has(edge.target)) {
+            if (!nodeMap.has(edge.source)) {
                 errors.push({
                     edgeId: edge.id,
                     severity: 'error',
                     code: 'DANGLING_EDGE',
-                    message: `Edge ${edge.id} points to a non-existent node (${edge.source} -> ${edge.target}).`,
+                    message: `Edge [${edge.id}] has non-existent source: ${edge.source}`,
+                });
+            }
+            if (!nodeMap.has(edge.target)) {
+                errors.push({
+                    edgeId: edge.id,
+                    severity: 'error',
+                    code: 'DANGLING_EDGE',
+                    message: `Edge [${edge.id}] has non-existent target: ${edge.target}`,
                 });
             }
         }
 
-        // Build adjacency list for valid edges
+        // Building adjacency list
         const adj = new Map<string, string[]>();
-        for (const n of nodes) {
-            adj.set(n.id, []);
+        for (const node of nodes) {
+            adj.set(node.id, []);
         }
         for (const edge of edges) {
-            if (nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
-                adj.get(edge.source)?.push(edge.target);
+            if (adj.has(edge.source)) {
+                adj.get(edge.source)!.push(edge.target);
             }
         }
 
-        // 3. Finding unreachable nodes (BFS/DFS from Root)
+        // 3. Checking node reachability from root
         if (rootId && nodeMap.has(rootId)) {
             const reachable = new Set<string>();
-            const stack = [rootId];
+            const queue = [rootId];
             reachable.add(rootId);
 
-            while (stack.length > 0) {
-                const curr = stack.pop()!;
-                const neighbors = adj.get(curr) || [];
-                for (const nextId of neighbors) {
-                    if (!reachable.has(nextId)) {
-                        reachable.add(nextId);
-                        stack.push(nextId);
+            while (queue.length > 0) {
+                const curr = queue.shift()!;
+                for (const next of adj.get(curr) || []) {
+                    if (!reachable.has(next) && nodeMap.has(next)) {
+                        reachable.add(next);
+                        queue.push(next);
                     }
                 }
             }
 
             for (const node of nodes) {
                 if (!reachable.has(node.id)) {
-                    const label = (node.data as any)?.label || node.id;
+                    const label = (node.data as AnyNodeData)?.label || node.id;
                     errors.push({
                         nodeId: node.id,
                         severity: 'warning',
@@ -91,7 +95,7 @@ export class GraphValidator {
         // 4. Finding cycles (DFS cycle detection)
         const cycles = this.findSimpleCycles(adj);
         for (const cycle of cycles) {
-            const cycleLabels = cycle.map((id) => (nodeMap.get(id)?.data as any)?.label || id);
+            const cycleLabels = cycle.map((id) => (nodeMap.get(id)?.data as AnyNodeData)?.label || id);
             errors.push({
                 nodeId: cycle[0],
                 severity: 'warning',
@@ -102,7 +106,7 @@ export class GraphValidator {
 
         // 5. Checking dialogue nodes without response options
         for (const node of nodes) {
-            if (node.type === 'dialogue' || node.type === ('dialogueNode' as any)) {
+            if (node.type === 'dialogue' || node.type === ('dialogueNode' as string)) {
                 const options = (node.data as DialogueNodeData)?.options;
                 if (!options || options.length === 0) {
                     const speaker = (node.data as DialogueNodeData)?.speakerName || 'NPC';

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AIGenerateRequest, AIGenerateResponse } from '@questcraft/shared-types';
+import { AIGenerateRequest, AIGenerateResponse } from '@/types';
 
 export async function POST(request: Request) {
     try {

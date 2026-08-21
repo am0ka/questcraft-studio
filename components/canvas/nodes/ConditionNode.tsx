@@ -1,7 +1,7 @@
 'use client';
 
 import { useGraphStore } from '@/store/useGraphStore';
-import { ConditionNodeData, ConditionOperator, ConditionRule } from '@questcraft/shared-types';
+import { ConditionNodeData, ConditionOperator, ConditionRule } from '@/types';
 import { Handle, Node, NodeProps, Position } from '@xyflow/react';
 import { Check, GitBranch, Trash2, X } from 'lucide-react';
 import { memo } from 'react';

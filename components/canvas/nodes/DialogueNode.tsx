@@ -3,7 +3,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { MessageSquare, Plus, Trash2, User } from 'lucide-react';
-import { DialogueNodeData } from '@questcraft/shared-types';
+import { DialogueNodeData } from '@/types';
 import { useGraphStore } from '@/store/useGraphStore';
 
 export const DialogueNode = memo(({ id, data, selected }: NodeProps<Node<DialogueNodeData>>) => {

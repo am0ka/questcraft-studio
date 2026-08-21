@@ -1,7 +1,7 @@
 'use client';
 
 import { useGraphStore } from '@/store/useGraphStore';
-import { ActionNodeData, ActionPayload, ActionType } from '@questcraft/shared-types';
+import { ActionNodeData, ActionPayload, ActionType } from '@/types';
 import { Handle, Node, NodeProps, Position } from '@xyflow/react';
 import { Trash2, Zap } from 'lucide-react';
 import { memo } from 'react';
