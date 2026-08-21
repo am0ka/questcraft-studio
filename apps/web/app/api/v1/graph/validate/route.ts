@@ -7,9 +7,10 @@ export async function POST(request: Request) {
         const payload: QuestGraph = await request.json();
         const result = GraphValidator.validate(payload);
         return NextResponse.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to validate graph';
         return NextResponse.json(
-            { error: error?.message || 'Failed to validate graph' },
+            { error: message },
             { status: 500 }
         );
     }

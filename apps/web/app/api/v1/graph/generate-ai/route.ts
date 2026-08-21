@@ -27,9 +27,10 @@ export async function POST(request: Request) {
 
         const selected = scenarios[Math.floor(Math.random() * scenarios.length)];
         return NextResponse.json(selected);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to generate AI dialogue';
         return NextResponse.json(
-            { error: error?.message || 'Failed to generate AI dialogue' },
+            { error: message },
             { status: 500 }
         );
     }

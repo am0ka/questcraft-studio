@@ -16,9 +16,10 @@ export async function POST(request: Request) {
 
         const result = GraphSerializer.exportCode(graph, targetEngine || 'json', namespace);
         return NextResponse.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to export code';
         return NextResponse.json(
-            { error: error?.message || 'Failed to export code' },
+            { error: message },
             { status: 500 }
         );
     }
