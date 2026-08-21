@@ -39,41 +39,9 @@ jobs:
           cd packages/core-engine
           pnpm test:coverage
 
-  python-tests:
-    name: Python Backend Tests & Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v1
-        with:
-          version: "latest"
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install Python Dependencies
-        run: |
-          cd apps/api
-          uv sync --all-groups
-
-      - name: Run Pytest & Generate Coverage
-        run: |
-          cd apps/api
-          uv run pytest --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml
-
-      - name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-coverage
-          path: apps/api/coverage.xml
-
   deploy:
     name: Zero-Downtime Deploy
-    needs: [ts-tests, python-tests]
+    needs: [ts-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     
@@ -116,12 +84,7 @@ jobs:
             echo "🔨 Pre-building images in background..."
             docker compose build
 
-            echo "🔄 Gracefully updating API (Backend)..."
-            # Перезапускаем только api и ждем healthcheck
-            docker compose up -d --no-deps --wait api
-
-            echo "🔄 Gracefully updating Web (Frontend)..."
-            # Перезапускаем только web и ждем healthcheck
+            echo "🔄 Gracefully updating Web (Next.js Application)..."
             docker compose up -d --no-deps --wait web
 
             echo "🧹 Cleaning up dangling images..."

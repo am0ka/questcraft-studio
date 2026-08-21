@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export const CanvasToolbar = () => {
     const {
@@ -61,7 +61,7 @@ export const CanvasToolbar = () => {
             const data = await res.json();
             setLintResults(data);
         } catch {
-            alert('FastAPI server is offline. Run: uv run uvicorn main:app --reload in apps/api');
+            alert('Failed to validate graph. Please try again.');
         } finally {
             setIsLinting(false);
         }
@@ -95,7 +95,7 @@ export const CanvasToolbar = () => {
             const data = await res.json();
             setExportModal({ fileName: data.fileName, code: data.code, engine });
         } catch {
-            alert('Export failed. Ensure backend is running.');
+            alert('Export failed. Please try again.');
         }
     };
 
