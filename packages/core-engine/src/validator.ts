@@ -1,74 +1,173 @@
-import { QuestGraph, GraphValidationResult, GraphValidationError } from '@questcraft/shared-types';
+import { QuestGraph, GraphValidationResult, GraphValidationError, DialogueNodeData } from '@questcraft/shared-types';
 
 export class GraphValidator {
     public static validate(graph: QuestGraph): GraphValidationResult {
         const errors: GraphValidationError[] = [];
+        const nodes = (graph.nodes || []).filter(Boolean);
+        const edges = (graph.edges || []).filter(Boolean);
 
-        if (!graph.nodes || graph.nodes.length === 0) {
+        if (nodes.length === 0) {
             errors.push({
                 severity: 'error',
-                code: 'EMPTY_ROOT',
-                message: 'Graph contains no nodes.',
+                code: 'EMPTY_GRAPH',
+                message: 'The graph does not contain any nodes.',
             });
-            return { isValid: false, errors };
+            return {
+                isValid: false,
+                nodesCount: 0,
+                edgesCount: 0,
+                errors,
+            };
         }
 
-        // 1. Check that Root node exists
-        const rootNode = graph.nodes.find((n) => n?.id === graph.rootNodeId) || graph.nodes[0];
-        if (!rootNode) {
+        const nodeMap = new Map<string, (typeof nodes)[0]>();
+        for (const n of nodes) {
+            nodeMap.set(n.id, n);
+        }
+
+        // 1. Checking the root node (Root Node)
+        const rootId = graph.rootNodeId || nodes[0]?.id;
+        if (!rootId || !nodeMap.has(rootId)) {
             errors.push({
                 severity: 'error',
-                code: 'EMPTY_ROOT',
-                message: 'Root node is not defined.',
+                code: 'NO_ROOT_NODE',
+                message: 'The root node of the quest is not defined (Root Node).',
             });
         }
 
-        // 2. Check for unreachable nodes (DFS)
-        const reachableNodes = new Set<string>();
-        if (rootNode) {
-            const stack = [rootNode.id];
-            reachableNodes.add(rootNode.id);
-
-            while (stack.length > 0) {
-                const curr = stack.pop()!;
-                const targets = graph.edges.filter((e) => e.source === curr).map((e) => e.target);
-
-                for (const targetId of targets) {
-                    if (!reachableNodes.has(targetId)) {
-                        reachableNodes.add(targetId);
-                        stack.push(targetId);
-                    }
-                }
-            }
-        }
-
-        for (const node of graph.nodes) {
-            if (node && !reachableNodes.has(node.id)) {
-                errors.push({
-                    nodeId: node.id,
-                    severity: 'warning',
-                    code: 'UNREACHABLE_NODE',
-                    message: `Node "${node.id}" cannot be reached from root.`,
-                });
-            }
-        }
-
-        // 3. Check for dangling edges
-        const nodeIds = new Set(graph.nodes.filter(Boolean).map((n) => n.id));
-        for (const edge of graph.edges) {
-            if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
+        // 2. Checking dangling edges
+        for (const edge of edges) {
+            if (!nodeMap.has(edge.source) || !nodeMap.has(edge.target)) {
                 errors.push({
                     edgeId: edge.id,
                     severity: 'error',
                     code: 'DANGLING_EDGE',
-                    message: `Edge connects to a non-existent node (${edge.source} -> ${edge.target}).`,
+                    message: `Edge ${edge.id} points to a non-existent node (${edge.source} -> ${edge.target}).`,
                 });
             }
         }
 
+        // Build adjacency list for valid edges
+        const adj = new Map<string, string[]>();
+        for (const n of nodes) {
+            adj.set(n.id, []);
+        }
+        for (const edge of edges) {
+            if (nodeMap.has(edge.source) && nodeMap.has(edge.target)) {
+                adj.get(edge.source)?.push(edge.target);
+            }
+        }
+
+        // 3. Finding unreachable nodes (BFS/DFS from Root)
+        if (rootId && nodeMap.has(rootId)) {
+            const reachable = new Set<string>();
+            const stack = [rootId];
+            reachable.add(rootId);
+
+            while (stack.length > 0) {
+                const curr = stack.pop()!;
+                const neighbors = adj.get(curr) || [];
+                for (const nextId of neighbors) {
+                    if (!reachable.has(nextId)) {
+                        reachable.add(nextId);
+                        stack.push(nextId);
+                    }
+                }
+            }
+
+            for (const node of nodes) {
+                if (!reachable.has(node.id)) {
+                    const label = (node.data as any)?.label || node.id;
+                    errors.push({
+                        nodeId: node.id,
+                        severity: 'warning',
+                        code: 'UNREACHABLE_NODE',
+                        message: `Node [${label}] is unreachable from the starting point.`,
+                    });
+                }
+            }
+        }
+
+        // 4. Finding cycles (DFS cycle detection)
+        const cycles = this.findSimpleCycles(adj);
+        for (const cycle of cycles) {
+            const cycleLabels = cycle.map((id) => (nodeMap.get(id)?.data as any)?.label || id);
+            errors.push({
+                nodeId: cycle[0],
+                severity: 'warning',
+                code: 'DETECTED_CYCLE',
+                message: `Found a cycle: ${cycleLabels.join(' -> ')}`,
+            });
+        }
+
+        // 5. Checking dialogue nodes without response options
+        for (const node of nodes) {
+            if (node.type === 'dialogue' || node.type === ('dialogueNode' as any)) {
+                const options = (node.data as DialogueNodeData)?.options;
+                if (!options || options.length === 0) {
+                    const speaker = (node.data as DialogueNodeData)?.speakerName || 'NPC';
+                    errors.push({
+                        nodeId: node.id,
+                        severity: 'warning',
+                        code: 'EMPTY_CHOICES',
+                        message: `Dialogue [${speaker}] does not contain response options.`,
+                    });
+                }
+            }
+        }
+
+        const hasErrors = errors.some((e) => e.severity === 'error');
+
         return {
-            isValid: errors.filter((e) => e.severity === 'error').length === 0,
+            isValid: !hasErrors,
+            nodesCount: nodes.length,
+            edgesCount: edges.length,
             errors,
         };
+    }
+
+    /**
+     * Find elementary directed cycles using DFS
+     */
+    private static findSimpleCycles(adj: Map<string, string[]>): string[][] {
+        const cycles: string[][] = [];
+        const visitedState = new Map<string, number>(); // 0: unvisited, 1: visiting, 2: visited
+        const currentPath: string[] = [];
+        const reportedCycles = new Set<string>();
+
+        const dfs = (node: string) => {
+            visitedState.set(node, 1);
+            currentPath.push(node);
+
+            const neighbors = adj.get(node) || [];
+            for (const neighbor of neighbors) {
+                const state = visitedState.get(neighbor) || 0;
+                if (state === 1) {
+                    // Cycle detected! Extract cycle from neighbor to end of currentPath
+                    const cycleStartIndex = currentPath.indexOf(neighbor);
+                    if (cycleStartIndex !== -1) {
+                        const cycle = currentPath.slice(cycleStartIndex);
+                        const cycleKey = [...cycle].sort().join(',');
+                        if (!reportedCycles.has(cycleKey)) {
+                            reportedCycles.add(cycleKey);
+                            cycles.push([...cycle, neighbor]);
+                        }
+                    }
+                } else if (state === 0) {
+                    dfs(neighbor);
+                }
+            }
+
+            currentPath.pop();
+            visitedState.set(node, 2);
+        };
+
+        for (const node of adj.keys()) {
+            if ((visitedState.get(node) || 0) === 0) {
+                dfs(node);
+            }
+        }
+
+        return cycles;
     }
 }

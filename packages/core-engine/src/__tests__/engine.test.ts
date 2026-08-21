@@ -400,6 +400,8 @@ describe('GraphValidator - Complete Coverage', () => {
     it('should pass valid complete graph', () => {
         const res = GraphValidator.validate(baseGraph);
         expect(res.isValid).toBe(true);
+        expect(res.nodesCount).toBe(baseGraph.nodes.length);
+        expect(res.edgesCount).toBe(baseGraph.edges.length);
     });
 
     it('should flag empty graph', () => {
@@ -408,38 +410,120 @@ describe('GraphValidator - Complete Coverage', () => {
     });
 
     it('should flag graph when rootNode is undefined in non-empty nodes list', () => {
-        const res = GraphValidator.validate({ ...baseGraph, nodes: [undefined as any], edges: [] });
+        const res = GraphValidator.validate({ ...baseGraph, rootNodeId: 'non-existent', nodes: [{ id: 'node-1', type: 'dialogue', position: { x: 0, y: 0 }, data: { label: 'Node', speakerName: 'NPC', messageText: '', options: [{ id: '1', text: 'hi' }] } }], edges: [] });
         expect(res.isValid).toBe(false);
-        expect(res.errors.some((e) => e.code === 'EMPTY_ROOT')).toBe(true);
+        expect(res.errors.some((e) => e.code === 'NO_ROOT_NODE')).toBe(true);
     });
 
-    it('should detect unreachable nodes and dangling edges', () => {
+    it('should detect unreachable nodes, dangling edges, empty choices and cycles', () => {
         const invalidGraph: QuestGraph = {
             ...baseGraph,
             nodes: [
                 ...baseGraph.nodes,
                 { id: 'lost-node', type: 'dialogue', position: { x: 0, y: 0 }, data: { label: 'Lost', speakerName: 'NPC', messageText: '', options: [] } },
+                { id: 'cycle-1', type: 'action', position: { x: 0, y: 0 }, data: { label: 'C1', actions: [] } },
+                { id: 'cycle-2', type: 'action', position: { x: 0, y: 0 }, data: { label: 'C2', actions: [] } },
             ],
             edges: [
                 ...baseGraph.edges,
                 { id: 'dangling', source: 'node-start', target: 'ghost-node' },
                 { id: 'dangling-source', source: 'ghost-source', target: 'node-start' },
+                { id: 'c-edge-1', source: 'cycle-1', target: 'cycle-2' },
+                { id: 'c-edge-2', source: 'cycle-2', target: 'cycle-1' },
             ],
         };
         const res = GraphValidator.validate(invalidGraph);
         expect(res.isValid).toBe(false);
         expect(res.errors.some((e) => e.code === 'UNREACHABLE_NODE')).toBe(true);
         expect(res.errors.some((e) => e.code === 'DANGLING_EDGE')).toBe(true);
+        expect(res.errors.some((e) => e.code === 'EMPTY_CHOICES')).toBe(true);
+        expect(res.errors.some((e) => e.code === 'DETECTED_CYCLE')).toBe(true);
     });
 });
 
 describe('GraphSerializer - Complete Coverage', () => {
-    it('should serialize graph with root and without root', () => {
+    it('should serialize graph to JSON', () => {
         const json1 = GraphSerializer.toGameEngineJSON(baseGraph);
         expect(JSON.parse(json1).meta.title).toBe('Epic Adventure');
 
         const noRootGraph = { ...baseGraph, rootNodeId: '' };
         const json2 = GraphSerializer.toGameEngineJSON(noRootGraph);
         expect(JSON.parse(json2).initial_node_id).toBe('node-start');
+    });
+
+    it('should export code for Unity C#', () => {
+        const exported = GraphSerializer.exportCode(baseGraph, 'unity_csharp', 'MyGame.Quests');
+        expect(exported.targetEngine).toBe('unity_csharp');
+        expect(exported.fileName).toContain('QuestData.cs');
+        expect(exported.code).toContain('namespace MyGame.Quests');
+        expect(exported.code).toContain('ScriptableObject');
+        expect(exported.code).toContain('DialogueOption');
+    });
+
+    it('should export code for Godot GDScript', () => {
+        const exported = GraphSerializer.exportCode(baseGraph, 'godot_gdscript');
+        expect(exported.targetEngine).toBe('godot_gdscript');
+        expect(exported.fileName).toContain('_quest.gd');
+        expect(exported.code).toContain('extends Resource');
+        expect(exported.code).toContain('GRAPH_DATA =');
+    });
+
+    it('should export code for compact JSON format', () => {
+        const exported = GraphSerializer.exportCode(baseGraph, 'json');
+        expect(exported.targetEngine).toBe('json');
+        expect(exported.fileName).toContain('_quest.json');
+        expect(JSON.parse(exported.code).title).toBe('Epic Adventure');
+    });
+
+    it('should handle edge cases in serialization and escaping', () => {
+        expect(GraphSerializer.sanitizeName('')).toBe('MyQuest');
+        expect(GraphSerializer.sanitizeName('   ')).toBe('MyQuest');
+
+        const sparseGraph: QuestGraph = {
+            id: 'sparse_quest\n"123"',
+            title: '',
+            nodes: [
+                {
+                    id: 'd1',
+                    type: 'dialogue',
+                    position: { x: 0, y: 0 },
+                    data: {
+                        label: '',
+                        speakerName: '',
+                        messageText: 'Line 1\nLine 2\r"quoted"',
+                        options: [{ id: '', text: '' }, { id: 'opt2', text: 'Opt2' }],
+                    },
+                },
+                {
+                    id: 'c1',
+                    type: 'condition',
+                    position: { x: 0, y: 0 },
+                    data: {
+                        label: 'Condition Node',
+                        logic: 'AND',
+                        rules: [],
+                    },
+                },
+                {
+                    id: 'a1',
+                    type: 'action',
+                    position: { x: 0, y: 0 },
+                    data: {
+                        label: 'Action Node',
+                        actions: [],
+                    },
+                },
+            ],
+            edges: [
+                { id: 'e-fallback', source: 'd1', target: 'c1' },
+            ],
+        };
+
+        const unity = GraphSerializer.toUnityCSharp(sparseGraph);
+        expect(unity).toContain('MyQuest');
+        expect(unity).toContain('QuestCraft');
+
+        const godot = GraphSerializer.toGodotGDScript(sparseGraph);
+        expect(godot).toContain('class_name MyQuestQuest');
     });
 });
