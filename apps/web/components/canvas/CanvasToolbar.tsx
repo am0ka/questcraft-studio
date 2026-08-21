@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
 export const CanvasToolbar = () => {
     const {
         addDialogueNode,
@@ -51,7 +53,7 @@ export const CanvasToolbar = () => {
     const handleLintGraph = async () => {
         setIsLinting(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/graph/validate', {
+            const res = await fetch(`${API_BASE}/v1/graph/validate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(getPayload()),
@@ -68,7 +70,7 @@ export const CanvasToolbar = () => {
     const handleGenerateAI = async () => {
         setIsGeneratingAI(true);
         try {
-            const res = await fetch('http://localhost:8000/api/v1/graph/generate-ai', {
+            const res = await fetch(`${API_BASE}/v1/graph/generate-ai`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: 'Cyberpunk illegal augments deal', speakerName: 'Fixer Jack' }),
@@ -85,7 +87,7 @@ export const CanvasToolbar = () => {
 
     const handleExport = async (engine: string) => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/graph/export', {
+            const res = await fetch(`${API_BASE}/v1/graph/export`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ graph: getPayload(), targetEngine: engine }),
