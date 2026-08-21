@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB.svg?logo=react)](https://react.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](https://www.docker.com/)
+[![Coolify](https://img.shields.io/badge/Coolify-Railpack%20Ready-6B21A8.svg)](https://coolify.io/)
 
 ## 🌟 Overview
 
@@ -91,8 +91,6 @@ questcraft-studio/
 ├── types/                       # Canonical TypeScript Contracts & DTOs
 ├── store/                       # Zustand Store & Preset Templates
 ├── public/                      # Static Assets
-├── Dockerfile                   # Multi-stage Standalone Docker build
-├── docker-compose.yaml          # Containerized deployment definition
 └── package.json                 # Project scripts & dependencies
 ```
 
@@ -101,7 +99,6 @@ questcraft-studio/
 ### Prerequisites
 - Node.js: `v20+` (or `v24`)
 - pnpm: `v9+` / `v11` (`corepack enable pnpm`)
-- Docker & Docker Compose (optional for containerized run)
 
 ### 1. Clone & Install Dependencies
 ```bash
@@ -127,25 +124,28 @@ pnpm test
 pnpm test:coverage
 ```
 
-### 4. Build for Production
+### 4. Build & Start for Production
 ```bash
 pnpm build
 pnpm start
 ```
 
-### 5. Run with Docker Compose
-```bash
-docker compose up --build
-```
-Healthcheck is available at `http://localhost:3000/api/health`.
+### 5. Deploy with Coolify (Railpack / Nixpacks)
+Connect your repository in **Coolify**:
+- **Build Pack**: Railpack / Nixpacks / Node.js
+- **Install Command**: `pnpm install`
+- **Build Command**: `pnpm build`
+- **Start Command**: `pnpm start`
+- **Healthcheck Path**: `/api/health`
+- **Port**: `3000`
 
 ## 🧪 Tech Stack Summary
 
-- **Framework**: Next.js 16 (App Router, Turbopack, Standalone Output)
+- **Framework**: Next.js 16 (App Router, Turbopack)
 - **UI & State**: React 19, React Flow (@xyflow/react), Zustand, Tailwind CSS v4, Lucide Icons
 - **Engine & Compilers**: TypeScript 5.9, Directed Graph DFS/BFS Analyzer, Unity C# / Godot GDScript Serializers
 - **Testing**: Vitest, V8 Coverage Provider
-- **Deployment**: Docker Standalone, GitHub Actions CI/CD with Zero-Downtime deploy
+- **Deployment**: Coolify (Railpack / Nixpacks), GitHub Actions CI/CD
 
 ## 👨‍💻 Author
 - 💼 [LinkedIn](https://www.linkedin.com/in/am0ka/)
