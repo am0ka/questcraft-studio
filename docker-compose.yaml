@@ -2,7 +2,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: Dockerfile
     container_name: questcraft_web
     ports:
       - "3000:3000"
@@ -11,7 +11,7 @@ services:
       - NEXT_PUBLIC_API_URL=/api
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1" ]
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 3
