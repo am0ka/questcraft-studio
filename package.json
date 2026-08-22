@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^1.6.0",
@@ -36,6 +36,6 @@
   },
   "packageManager": "pnpm@11.22.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }
