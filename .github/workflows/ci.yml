@@ -24,8 +24,11 @@ jobs:
           node-version: 24
           cache: 'pnpm'
 
+      - name: Approve Builds
+        run: pnpm approve-builds
+
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --allow-scripts
 
       - name: Run Lint & Typecheck
         run: pnpm lint
