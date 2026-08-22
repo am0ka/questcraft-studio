@@ -28,7 +28,7 @@ jobs:
         run: pnpm approve-builds
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile --allow-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Run Lint & Typecheck
         run: pnpm lint
